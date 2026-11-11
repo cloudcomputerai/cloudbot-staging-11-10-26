@@ -1,0 +1,50 @@
+# CISO Assistant as its own process. Official images only: this file does not vendor CISO Assistant source,
+# and it does not start the upstream huey, qdrant, or caddy containers.
+# A signature records an officer's decision. It does not certify HIPAA, ISO, or GDPR.
+# Seed the asset in ciso-assistant/asset.json after the API is up (the name stays "CloudBot on ${HOSTNAME}" until you expand it).
+
+services:
+  backend:
+    image: ghcr.io/intuitem/ciso-assistant-community/backend:latest
+    user: "1001:1001"
+    read_only: true
+    environment:
+      ALLOWED_HOSTS: ${CISO_ALLOWED_HOSTS:?set me}
+      CISO_ASSISTANT_URL: ${CISO_ASSISTANT_URL:?set me}
+      DJANGO_DEBUG: "False"
+      AUTH_TOKEN_TTL: "7200"
+      HOME: /tmp
+      XDG_CACHE_HOME: /tmp/.cache
+      XDG_CONFIG_HOME: /tmp/.config
+      XDG_DATA_HOME: /tmp/.local/share
+      DJANGO_SUPERUSER_USERNAME: ${CISO_SUPERUSER_USERNAME:?set me}
+      DJANGO_SUPERUSER_EMAIL: ${CISO_SUPERUSER_EMAIL:?set me}
+      DJANGO_SUPERUSER_PASSWORD: ${CISO_SUPERUSER_PASSWORD:?set me}
+    volumes:
+      - ciso-db:/code/db
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://backend:8000/api/health/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+  frontend:
+    image: ghcr.io/intuitem/ciso-assistant-community/frontend:latest
+    read_only: true
+    environment:
+      PUBLIC_BACKEND_API_URL: http://backend:8000/api
+      PUBLIC_BACKEND_API_EXPOSED_URL: ${CISO_PUBLIC_BACKEND_API_URL:?set me}
+      ORIGIN: ${CISO_ASSISTANT_URL:?set me}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+    ports:
+      # The community frontend image listens on 3000.
+      - "${CISO_FRONTEND_PORT:?set me}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  ciso-db:

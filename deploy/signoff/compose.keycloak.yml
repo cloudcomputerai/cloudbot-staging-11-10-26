@@ -1,0 +1,16 @@
+# Keycloak as its own process. Official image only: this file does not vendor Keycloak source.
+# The realm import creates officer groups and no users. Set the admin password in the environment, not in a file.
+# A signature records an officer's decision. It does not certify HIPAA, ISO, or GDPR.
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    command: ["start-dev", "--import-realm", "--http-enabled=true"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:?set me}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set me}
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:?set me}
+    volumes:
+      - ./keycloak/cloudbot-realm.json:/opt/keycloak/data/import/cloudbot-realm.json:ro
+    ports:
+      - "${KEYCLOAK_PORT:?set me}:8080"

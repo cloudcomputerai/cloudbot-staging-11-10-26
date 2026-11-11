@@ -1,0 +1,16 @@
+{
+  "realm": "cloudbot",
+  "enabled": true,
+  "groups": [
+    { "name": "ciso" },
+    { "name": "dpo" },
+    { "name": "counsel" },
+    { "name": "privacy" },
+    { "name": "cro" },
+    { "name": "system-owner" },
+    { "name": "cfo" },
+    { "name": "pci-lead" },
+    { "name": "ferpa" },
+    { "name": "aio-owner" }
+  ]
+}
